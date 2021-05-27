@@ -1,26 +1,40 @@
 version: "2"
+
 services:
+  app:
+    build:
+      context: application/
+    volumes:
+      - ./application:/app
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    command: "/bin/bash"
+
   elasticsearch:
     image: elasticsearch:2.3.3
     command: elasticsearch -Des.network.host=0.0.0.0
+
   kibana:
     image: kibana:4.5.1
     ports:
       - "5601:5601"
     depends_on:
       - elasticsearch
+
   logstash:
-    image: logstash:2.3.2
+    image: logstash:7.12.1
     command: logstash -f /etc/logstash/conf.d/logstash.conf
     volumes:
       - ./logstash:/etc/logstash/conf.d
       - ./logstash/patterns:/opt/logstash/patterns
     depends_on:
       - elasticsearch
+
   filebeat:
     image: prima/filebeat
     volumes:
       - ./filebeat/filebeat.yml:/filebeat.yml
-      - ../fake-logs:/var/log
+      - ./application/logs:/var/log
     depends_on:
       - logstash
